@@ -1,0 +1,11 @@
+--- a/sch_fq_codel_fast.c
++++ b/sch_fq_codel_fast.c
+@@ -689,7 +689,7 @@ static const struct Qdisc_class_ops fq_c
+ 	.walk		=	fq_codel_walk,
+ };
+ 
+-static struct Qdisc_ops fq_codel_qdisc_ops __read_mostly = {
++struct Qdisc_ops fq_codel_qdisc_ops __read_mostly = {
+ 	.cl_ops		=	&fq_codel_class_ops,
+ 	.id		=	"fq_codel_fast",
+ 	.priv_size	=	sizeof(struct fq_codel_sched_data),
