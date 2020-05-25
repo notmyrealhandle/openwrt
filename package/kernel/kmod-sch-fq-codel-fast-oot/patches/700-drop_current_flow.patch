@@ -1,0 +1,42 @@
+--- a/sch_fq_codel_fast.c
++++ b/sch_fq_codel_fast.c
+@@ -148,16 +148,16 @@ static unsigned int fq_codel_drop(struct
+ 	sch->qstats.drops += i;
+ 	sch->qstats.backlog -= len;
+ 	sch->q.qlen -= i;
+-	idx = 1055; // just ignore for now
++	// idx = 1055; // just ignore for now
+ 	// idx = (q->flows - q->fat_flow) >> FIXME SOME_CORRECT_DEFINE
+-	return idx;
++	return 0; // success
+ }
+ 
+ static int fq_codel_enqueue(struct sk_buff *skb, struct Qdisc *sch,
+ 			    struct sk_buff **to_free)
+ {
+ 	struct fq_codel_sched_data *q = qdisc_priv(sch);
+-	unsigned int idx, prev_backlog, prev_qlen;
++	unsigned int idx, prev_backlog, prev_qlen, drop_current_flow = 0;
+ 	struct fq_codel_flow *flow;
+ 	int uninitialized_var(ret);
+ 	unsigned int pkt_len;
+@@ -215,6 +215,7 @@ static int fq_codel_enqueue(struct sk_bu
+ 	if(flow->backlog > q->fat_backlog) {
+ 		q->fat_flow = flow;
+ 		q->fat_backlog = flow->backlog;
++		drop_current_flow = 1;
+ 	}
+ 
+ 	if (list_empty(&flow->flowchain)) {
+@@ -248,9 +249,10 @@ static int fq_codel_enqueue(struct sk_bu
+ 	 * If we dropped a packet for this flow, return NET_XMIT_CN,
+ 	 * but in this case, our parents wont increase their backlogs.
+ 	 */
+-	if (ret == idx) {
++	if (drop_current_flow) {
+ 		qdisc_tree_reduce_backlog(sch, prev_qlen - 1,
+ 					  prev_backlog - pkt_len);
++		printk("dropping current flow idx: %u", idx);
+ 		return NET_XMIT_CN;
+ 	}
+ 	qdisc_tree_reduce_backlog(sch, prev_qlen, prev_backlog);
